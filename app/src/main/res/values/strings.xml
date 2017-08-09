@@ -9,8 +9,13 @@
   <string name="settings_url_title">Server URL</string>
   <string name="settings_url_summary">Tracking server URL</string>
   <string name="settings_url_default_value" translatable="false">http://demo.traccar.org:5055</string>
+   <string name="settings_api_title">OpenCellid</string>
+  <string name="settings_api_summary">OpenCellid Api Key</string>
+  <string name="settings_api_default_value" translatable="false">your api key</string>
   <string name="settings_interval_title">Frequency</string>
   <string name="settings_interval_summary">Reporting interval in seconds</string>
+  <string name="settings_alt_interval_title">Alternative Frequency</string>
+  <string name="settings_alt_interval_summary">Reporting interval in seconds when Distance or Angle is > 0 </string>
   <string name="settings_distance_title">Distance</string>
   <string name="settings_distance_summary">Reporting distance in meters</string>
   <string name="settings_angle_title">Angle</string>
@@ -24,6 +29,7 @@
   <string name="settings_provider_summary">Source of location data</string>
   <string name="settings_provider_gps">GPS provider</string>
   <string name="settings_provider_network">Network provider</string>
+  <string name="settings_provider_cell">Cell provider</string>
   <string name="settings_provider_mixed">Mixed provider</string>
   <string name="settings_foreground_title">Foreground service</string>
   <string name="settings_foreground_summary">Increase service priority</string>

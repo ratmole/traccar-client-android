@@ -31,21 +31,21 @@ public abstract class PositionProvider {
 
     protected static final String TAG = PositionProvider.class.getSimpleName();
 
-    private static final int MINIMUM_INTERVAL = 1000;
-
     public interface PositionListener {
         void onPositionUpdate(Position position);
     }
 
     private final PositionListener listener;
 
-    private final Context context;
+    public final Context context;
     protected final LocationManager locationManager;
 
-    private String deviceId;
+    protected String deviceId;
     protected String type;
+    protected String api;
     protected long requestInterval;
     protected long interval;
+    protected long alt_interval;
     protected double distance;
     protected double angle;
 
@@ -60,11 +60,12 @@ public abstract class PositionProvider {
 
         deviceId = preferences.getString(MainActivity.KEY_DEVICE, null);
         interval = Long.parseLong(preferences.getString(MainActivity.KEY_INTERVAL, null)) * 1000;
+        alt_interval = Long.parseLong(preferences.getString(MainActivity.KEY_ALT_INTERVAL, null)) * 1000;
         distance = Integer.parseInt(preferences.getString(MainActivity.KEY_DISTANCE, null));
         angle = Integer.parseInt(preferences.getString(MainActivity.KEY_ANGLE, null));
 
         if (distance > 0 || angle > 0) {
-            requestInterval = MINIMUM_INTERVAL;
+            requestInterval = alt_interval;
         } else {
             requestInterval = interval;
         }
@@ -87,6 +88,8 @@ public abstract class PositionProvider {
         } else {
             Log.i(TAG, location != null ? "location ignored" : "location nil");
         }
+
+
     }
 
     @TargetApi(Build.VERSION_CODES.ECLAIR)

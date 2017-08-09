@@ -19,11 +19,24 @@
         android:title="@string/settings_url_title" />
 
     <EditTextPreference
+        android:defaultValue="@string/settings_api_default_value"
+        android:key="api"
+        android:summary="@string/settings_api_summary"
+        android:title="@string/settings_api_title" />
+
+    <EditTextPreference
         android:defaultValue="300"
         android:key="interval"
         android:numeric="integer"
         android:summary="@string/settings_interval_summary"
         android:title="@string/settings_interval_title" />
+
+    <EditTextPreference
+        android:defaultValue="3600"
+        android:key="alt_interval"
+        android:numeric="integer"
+        android:summary="@string/settings_alt_interval_summary"
+        android:title="@string/settings_alt_interval_title" />
 
     <EditTextPreference
         android:defaultValue="0"

@@ -62,9 +62,13 @@ public class TrackingController implements PositionProvider.PositionListener, Ne
         this.context = context;
         handler = new Handler();
         preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        Log.i(TAG, preferences.getString(MainActivity.KEY_PROVIDER, "gps"));
         if (preferences.getString(MainActivity.KEY_PROVIDER, "gps").equals("mixed")) {
             positionProvider = new MixedPositionProvider(context, this);
-        } else {
+        } else if (preferences.getString(MainActivity.KEY_PROVIDER, "gps").equals("cell")) {
+            positionProvider = new CellPositionProvider(context, this);
+        }
+        else {
             positionProvider = new SimplePositionProvider(context, this);
         }
         databaseHelper = new DatabaseHelper(context);
@@ -160,6 +164,7 @@ public class TrackingController implements PositionProvider.PositionListener, Ne
             public void onComplete(boolean success, Position result) {
                 if (success) {
                     if (result != null) {
+                        String re = result.getDeviceId();
                         if (result.getDeviceId().equals(preferences.getString(MainActivity.KEY_DEVICE, null))) {
                             send(result);
                         } else {
@@ -200,7 +205,7 @@ public class TrackingController implements PositionProvider.PositionListener, Ne
             @Override
             public void onComplete(boolean success) {
                 if (success) {
-                    delete(position);
+                   delete(position);
                 } else {
                     StatusActivity.addMessage(context.getString(R.string.status_send_fail));
                     retry();

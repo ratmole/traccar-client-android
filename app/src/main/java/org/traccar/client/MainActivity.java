@@ -50,7 +50,9 @@ public class MainActivity extends PreferenceActivity implements OnSharedPreferen
 
     public static final String KEY_DEVICE = "id";
     public static final String KEY_URL = "url";
+    public static final String KEY_API = "api";
     public static final String KEY_INTERVAL = "interval";
+    public static final String KEY_ALT_INTERVAL = "alt_interval";
     public static final String KEY_DISTANCE = "distance";
     public static final String KEY_ANGLE = "angle";
     public static final String KEY_PROVIDER = "provider";
@@ -88,7 +90,28 @@ public class MainActivity extends PreferenceActivity implements OnSharedPreferen
             }
         });
 
+        findPreference(KEY_API).setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                return newValue != null && !newValue.equals("");
+            }
+        });
+
         findPreference(KEY_INTERVAL).setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                if (newValue != null) {
+                    try {
+                        int value = Integer.parseInt((String) newValue);
+                        return value > 0;
+                    } catch (NumberFormatException e) {
+                        Log.w(TAG, e);
+                    }
+                }
+                return false;
+            }
+        });
+        findPreference(KEY_ALT_INTERVAL).setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 if (newValue != null) {
@@ -179,7 +202,9 @@ public class MainActivity extends PreferenceActivity implements OnSharedPreferen
     private void setPreferencesEnabled(boolean enabled) {
         findPreference(KEY_DEVICE).setEnabled(enabled);
         findPreference(KEY_URL).setEnabled(enabled);
+        findPreference(KEY_API).setEnabled(enabled);
         findPreference(KEY_INTERVAL).setEnabled(enabled);
+        findPreference(KEY_ALT_INTERVAL).setEnabled(enabled);
         findPreference(KEY_DISTANCE).setEnabled(enabled);
         findPreference(KEY_ANGLE).setEnabled(enabled);
         findPreference(KEY_PROVIDER).setEnabled(enabled);
@@ -311,6 +336,7 @@ public class MainActivity extends PreferenceActivity implements OnSharedPreferen
             builder.scheme(scheme).encodedAuthority(host + ":" + port).build();
             SharedPreferences.Editor editor = preferences.edit();
             editor.putString(KEY_URL, builder.toString());
+            editor.putString(KEY_API, builder.toString());
 
             editor.remove("port");
             editor.remove("address");
