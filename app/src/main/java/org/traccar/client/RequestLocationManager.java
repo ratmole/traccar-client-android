@@ -59,10 +59,8 @@ public class RequestLocationManager {
             connection.setReadTimeout(TIMEOUT);
             connection.setConnectTimeout(TIMEOUT);
             connection.connect();
-            //inputStream = connection.getInputStream();
 
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(connection.getInputStream()));
+            BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             String inputLine;
             StringBuffer response = new StringBuffer();
 
@@ -70,7 +68,6 @@ public class RequestLocationManager {
                 response.append(inputLine);
             }
             in.close();
-            //System.out.println("Response : -- " + response.toString());
             return response.toString();
         } catch (IOException error) {
             return "nan";

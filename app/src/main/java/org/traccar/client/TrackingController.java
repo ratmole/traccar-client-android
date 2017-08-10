@@ -17,11 +17,17 @@ package org.traccar.client;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.os.Build;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.Toast;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class TrackingController implements PositionProvider.PositionListener, NetworkManager.NetworkHandler {
 
@@ -36,7 +42,11 @@ public class TrackingController implements PositionProvider.PositionListener, Ne
     private Handler handler;
     private SharedPreferences preferences;
 
-    private String url;
+    private String url, api;
+    private Position oldDbId;
+
+    String cellidOld, celllacOld;
+    Double latOld, lonOld;
 
     private PositionProvider positionProvider;
     private DatabaseHelper databaseHelper;
@@ -62,13 +72,11 @@ public class TrackingController implements PositionProvider.PositionListener, Ne
         this.context = context;
         handler = new Handler();
         preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        Log.i(TAG, preferences.getString(MainActivity.KEY_PROVIDER, "gps"));
+        api = preferences.getString(MainActivity.KEY_API, null);
+
         if (preferences.getString(MainActivity.KEY_PROVIDER, "gps").equals("mixed")) {
             positionProvider = new MixedPositionProvider(context, this);
-        } else if (preferences.getString(MainActivity.KEY_PROVIDER, "gps").equals("cell")) {
-            positionProvider = new CellPositionProvider(context, this);
-        }
-        else {
+        } else {
             positionProvider = new SimplePositionProvider(context, this);
         }
         databaseHelper = new DatabaseHelper(context);
@@ -132,6 +140,7 @@ public class TrackingController implements PositionProvider.PositionListener, Ne
         if (position != null) {
             action += " (" +
                     "id:" + position.getId() +
+                    " gsm:" + position.getGsm() +
                     " time:" + position.getTime().getTime() / 1000 +
                     " lat:" + position.getLatitude() +
                     " lon:" + position.getLongitude() + ")";
@@ -164,9 +173,12 @@ public class TrackingController implements PositionProvider.PositionListener, Ne
             public void onComplete(boolean success, Position result) {
                 if (success) {
                     if (result != null) {
-                        String re = result.getDeviceId();
                         if (result.getDeviceId().equals(preferences.getString(MainActivity.KEY_DEVICE, null))) {
-                            send(result);
+                            if (result.getGsm() == 1) {
+                                getLocation(result, String.valueOf(result.getLatitude()), String.valueOf(result.getLongitude()));
+                            } else {
+                                send(result);
+                            }
                         } else {
                             delete(result);
                         }
@@ -181,7 +193,7 @@ public class TrackingController implements PositionProvider.PositionListener, Ne
         });
     }
 
-    private void delete(Position position) {
+    public void delete(Position position) {
         log("delete", position);
         lock();
         databaseHelper.deletePositionAsync(position.getId(), new DatabaseHelper.DatabaseHandler<Void>() {
@@ -205,7 +217,7 @@ public class TrackingController implements PositionProvider.PositionListener, Ne
             @Override
             public void onComplete(boolean success) {
                 if (success) {
-                   delete(position);
+                    delete(position);
                 } else {
                     StatusActivity.addMessage(context.getString(R.string.status_send_fail));
                     retry();
@@ -225,6 +237,69 @@ public class TrackingController implements PositionProvider.PositionListener, Ne
                 }
             }
         }, RETRY_DELAY);
+    }
+
+    private void getLocation(final Position positionC, final String cellid, final String celllac) {
+
+        if (cellid != null && (cellidOld == null || !cellid.equalsIgnoreCase(cellidOld))
+                || (celllac != null && (celllacOld == null || !celllac.equalsIgnoreCase(celllacOld)))) {
+
+            Log.i(TAG, "OpenCellid new");
+
+            TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+            String networkOperator = telephonyManager.getNetworkOperator();
+
+            int mcc = Integer.parseInt(networkOperator.substring(0, 3));
+            int mnc = Integer.parseInt(networkOperator.substring(3));
+
+            final String request = "https://www.opencellid.org/cell/get?mcc=" + mcc + "&mnc=" + mnc + "&cellid=" + cellid + "&lac=" + celllac + "&key=" + api + "&format=json";
+
+            RequestLocationManager.sendRequestAsync(request, new RequestLocationManager.RequestHandler() {
+                @Override
+                public void onComplete(String location) {
+                    if (!location.equalsIgnoreCase("nan")) {
+                        try {
+                            JSONObject jsonResponse = new JSONObject(location.toString());
+
+                            Location targetLocation = new Location("");
+                            targetLocation.setLatitude(Double.parseDouble(jsonResponse.getString("lat")));//your coords of course
+                            targetLocation.setLongitude(Double.parseDouble(jsonResponse.getString("lon")));
+
+                            positionC.setLatitude(targetLocation.getLatitude());
+                            positionC.setLongitude(targetLocation.getLongitude());
+
+                            send(positionC);
+
+                            cellidOld = cellid;
+                            celllacOld = celllac;
+
+                            latOld = Double.parseDouble(jsonResponse.getString("lat"));
+                            lonOld = Double.parseDouble(jsonResponse.getString("lon"));
+
+                        } catch (JSONException e) {
+                            StatusActivity.addMessage("OpenCellid Error");
+                            Toast.makeText(context, "OpenCellid Error, Please Check Your Api Key", Toast.LENGTH_SHORT).show();
+                            delete(positionC);
+                            e.printStackTrace();
+                        }
+
+                    }
+                }
+            });
+        } else {
+            Log.i(TAG, "OpenCellid old");
+
+            Location targetLocation = new Location("");
+            targetLocation.setLatitude(latOld);
+            targetLocation.setLongitude(lonOld);
+
+            positionC.setLatitude(targetLocation.getLatitude());
+            positionC.setLongitude(targetLocation.getLongitude());
+
+            send(positionC);
+
+        }
+
     }
 
 }

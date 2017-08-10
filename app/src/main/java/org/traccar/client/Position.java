@@ -16,6 +16,7 @@
 package org.traccar.client;
 
 import android.location.Location;
+import android.os.Bundle;
 
 import java.util.Date;
 
@@ -25,6 +26,8 @@ public class Position {
     }
 
     public Position(String deviceId, Location location, double battery) {
+
+        Bundle gsmE = location.getExtras();
         this.deviceId = deviceId;
         time = new Date(location.getTime());
         latitude = location.getLatitude();
@@ -33,6 +36,13 @@ public class Position {
         speed = location.getSpeed() * 1.943844; // speed in knots
         course = location.getBearing();
         this.battery = battery;
+
+        if(gsmE != null){
+            gsm = gsmE.getInt("gsm", 0);
+        } else {
+            gsm = 0;
+        }
+
     }
 
     private long id;
@@ -70,5 +80,9 @@ public class Position {
     private double battery;
     public double getBattery() { return battery; }
     public void setBattery(double battery) { this.battery = battery; }
+
+    private Integer gsm;
+    public Integer getGsm() { return gsm; }
+    public void setGsm(Integer gsm) { this.gsm = gsm; }
 
 }

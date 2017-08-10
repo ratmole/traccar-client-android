@@ -86,7 +86,7 @@ public abstract class PositionProvider {
             lastLocation = location;
             listener.onPositionUpdate(new Position(deviceId, location, getBatteryLevel(context)));
         } else {
-            Log.i(TAG, location != null ? "location ignored" : "location nil");
+            Log.i(TAG, location != null ? "location ignored: " + location.getTime() + " " + lastLocation.getTime() + " " + (location.getTime() - lastLocation.getTime()) : "location nil");
         }
 
 

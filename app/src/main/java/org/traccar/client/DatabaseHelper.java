@@ -64,6 +64,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private SQLiteDatabase db;
 
     public DatabaseHelper(Context context) {
+
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         db = getWritableDatabase();
     }
@@ -79,7 +80,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 "altitude REAL," +
                 "speed REAL," +
                 "course REAL," +
-                "battery REAL)");
+                "battery REAL," +
+                "gsm INTEGER)");
     }
 
     @Override
@@ -98,6 +100,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put("speed", position.getSpeed());
         values.put("course", position.getCourse());
         values.put("battery", position.getBattery());
+        values.put("gsm", position.getGsm());
 
         db.insertOrThrow("position", null, values);
     }
@@ -130,6 +133,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 position.setSpeed(cursor.getDouble(cursor.getColumnIndex("speed")));
                 position.setCourse(cursor.getDouble(cursor.getColumnIndex("course")));
                 position.setBattery(cursor.getDouble(cursor.getColumnIndex("battery")));
+                position.setGsm(cursor.getInt(cursor.getColumnIndex("gsm")));
 
             } else {
                 return null;

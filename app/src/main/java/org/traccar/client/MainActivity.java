@@ -68,6 +68,8 @@ public class MainActivity extends PreferenceActivity implements OnSharedPreferen
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
         if (BuildConfig.HIDDEN_APP) {
             removeLauncherIcon();
         }

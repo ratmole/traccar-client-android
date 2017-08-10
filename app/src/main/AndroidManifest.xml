@@ -41,7 +41,7 @@
 
         <service android:name=".TrackingService" />
 
-        <service android:name=".TrackingService$HideNotificationService" />
+        <!--<service android:name=".TrackingService$HideNotificationService" />-->
 
         <receiver android:name=".AutostartReceiver">
             <intent-filter>

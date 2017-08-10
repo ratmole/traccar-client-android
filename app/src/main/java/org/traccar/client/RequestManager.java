@@ -61,6 +61,7 @@ public class RequestManager {
             while (inputStream.read() != -1);
             return true;
         } catch (IOException error) {
+
             return false;
         } finally {
             try {

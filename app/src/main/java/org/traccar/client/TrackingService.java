@@ -21,6 +21,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
@@ -41,12 +42,17 @@ public class TrackingService extends Service {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
 
-            return new Notification.Builder(context)
-                .setContentTitle(context.getString(R.string.app_name))
-                .setContentText(context.getString(R.string.settings_status_on_summary))
-                .setContentIntent(pendingIntent)
-                .setPriority(Notification.PRIORITY_MIN)
-                .build();
+            Notification.Builder builder = new Notification.Builder(context)
+                    .setContentTitle(context.getString(R.string.app_name))
+                    .setContentText(context.getString(R.string.settings_status_on_summary))
+                    .setContentIntent(pendingIntent)
+                    .setSmallIcon(R.drawable.logo)
+                    .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.drawable.logo))
+                    ;
+            Notification n;
+            n = builder.build();
+            n.flags |= Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
+            return n;
 
         } else {
 
@@ -96,7 +102,7 @@ public class TrackingService extends Service {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ECLAIR) {
             startForeground(NOTIFICATION_ID, createNotification(this));
-            startService(new Intent(this, HideNotificationService.class));
+            //startService(new Intent(this, HideNotificationService.class));
         }
     }
 

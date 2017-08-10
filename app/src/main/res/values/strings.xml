@@ -8,7 +8,7 @@
   <string name="settings_id_title">Device identifier</string>
   <string name="settings_url_title">Server URL</string>
   <string name="settings_url_summary">Tracking server URL</string>
-  <string name="settings_url_default_value" translatable="false">http://demo.traccar.org:5055</string>
+  <string name="settings_url_default_value" translatable="false">https://demo.traccar.net:5055</string>
    <string name="settings_api_title">OpenCellid</string>
   <string name="settings_api_summary">OpenCellid Api Key</string>
   <string name="settings_api_default_value" translatable="false">your api key</string>

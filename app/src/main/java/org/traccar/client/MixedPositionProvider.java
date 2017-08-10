@@ -21,6 +21,9 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.telephony.TelephonyManager;
+import android.telephony.gsm.GsmCellLocation;
 import android.util.Log;
 
 @SuppressWarnings("MissingPermission")
@@ -30,9 +33,13 @@ public class MixedPositionProvider extends PositionProvider implements LocationL
 
     private LocationListener backupListener;
     private long lastFixTime;
+    private Handler handler;
+
 
     public MixedPositionProvider(Context context, PositionListener listener) {
         super(context, listener);
+        handler = new Handler();
+
     }
 
     public void startUpdates() {
@@ -53,34 +60,61 @@ public class MixedPositionProvider extends PositionProvider implements LocationL
 
     private void startBackupProvider() {
         Log.i(TAG, "backup provider start");
-        if (backupListener == null) {
 
-            backupListener = new LocationListener() {
-                @Override
-                public void onLocationChanged(Location location) {
-                    Log.i(TAG, "backup provider location");
-                    updateLocation(location);
-                }
+        LocationManager lm = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
 
-                @Override
-                public void onStatusChanged(String s, int i, Bundle bundle) {
-                }
+        boolean gps_enabled = false;
+        boolean network_enabled = false;
 
-                @Override
-                public void onProviderEnabled(String s) {
-                }
+        try {
+            gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        } catch(Exception ex) {}
 
-                @Override
-                public void onProviderDisabled(String s) {
-                }
-            };
+        try {
+            network_enabled = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        } catch(Exception ex) {}
 
-            locationManager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER, requestInterval, 0, backupListener);
+        //Log.i(TAG, "gps_enabled "+gps_enabled);
+       // Log.i(TAG, "network_enabled "+network_enabled);
+
+        if (!gps_enabled && !network_enabled) {
+            startUpdatesGsm();
+        } else {
+            stopUpdatesGsm();
+            if (backupListener == null) {
+
+                backupListener = new LocationListener() {
+                    @Override
+                    public void onLocationChanged(Location location) {
+                        Log.i(TAG, "backup provider location");
+                        lastFixTime = System.currentTimeMillis();
+                        updateLocation(location);
+                    }
+
+                    @Override
+                    public void onStatusChanged(String s, int i, Bundle bundle) {
+                    }
+
+                    @Override
+                    public void onProviderEnabled(String s) {
+                        stopUpdatesGsm();
+                    }
+
+                    @Override
+                    public void onProviderDisabled(String s) {
+
+
+                    }
+                };
+
+                locationManager.requestLocationUpdates(
+                        LocationManager.NETWORK_PROVIDER, requestInterval, 0, backupListener);
+            }
         }
     }
 
-    private void stopBackupProvider() {
+    public void stopBackupProvider() {
+        stopUpdatesGsm();
         Log.i(TAG, "backup provider stop");
         if (backupListener != null) {
             locationManager.removeUpdates(backupListener);
@@ -114,9 +148,52 @@ public class MixedPositionProvider extends PositionProvider implements LocationL
 
     @Override
     public void onGpsStatusChanged(int event) {
-        if (backupListener == null && System.currentTimeMillis() - lastFixTime - requestInterval > FIX_TIMEOUT) {
-            startBackupProvider();
-        }
+            if (backupListener == null && System.currentTimeMillis() - lastFixTime - requestInterval > FIX_TIMEOUT) {
+                startBackupProvider();
+            }
+    }
+
+    public void startUpdatesGsm() {
+            try {
+                    if (System.currentTimeMillis() - lastFixTime < requestInterval) {
+                        Log.i(TAG, "Update Ignored");
+                        retryGsm();
+                        return;
+                    }
+
+                TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+                GsmCellLocation cellLocation = (GsmCellLocation) telephonyManager.getCellLocation();
+
+                Location targetLocation = new Location("");
+                targetLocation.setLatitude(Double.parseDouble(String.valueOf(cellLocation.getCid())));
+                targetLocation.setLongitude(Double.parseDouble(String.valueOf(cellLocation.getLac())));
+                targetLocation.setTime(System.currentTimeMillis());
+
+                Bundle gsm = new Bundle();
+                gsm.putSerializable("gsm", 1);
+                targetLocation.setExtras(gsm);
+                lastFixTime = System.currentTimeMillis();
+                updateLocation(targetLocation);
+                retryGsm();
+
+            } catch (IllegalArgumentException e) {
+                Log.w(TAG, e);
+                retryGsm();
+            }
+
+    }
+
+    public void stopUpdatesGsm() {
+        handler.removeCallbacksAndMessages(null);
+    }
+
+        private void retryGsm() {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                startUpdatesGsm();
+            }
+        }, interval);
     }
 
 }
