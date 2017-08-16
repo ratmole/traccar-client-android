@@ -75,7 +75,7 @@ public class MixedPositionProvider extends PositionProvider implements LocationL
         } catch(Exception ex) {}
 
         //Log.i(TAG, "gps_enabled "+gps_enabled);
-       // Log.i(TAG, "network_enabled "+network_enabled);
+        // Log.i(TAG, "network_enabled "+network_enabled);
 
         if (!gps_enabled && !network_enabled) {
             startUpdatesGsm();
@@ -87,8 +87,13 @@ public class MixedPositionProvider extends PositionProvider implements LocationL
                     @Override
                     public void onLocationChanged(Location location) {
                         Log.i(TAG, "backup provider location");
+                        if (System.currentTimeMillis() - lastFixTime < requestInterval) {
+                            Log.i(TAG, "location forced");
+                            updateLocation(location,true);
+                        } else {
+                            updateLocation(location,false);
+                        }
                         lastFixTime = System.currentTimeMillis();
-                        updateLocation(location);
                     }
 
                     @Override
@@ -127,7 +132,7 @@ public class MixedPositionProvider extends PositionProvider implements LocationL
         Log.i(TAG, "provider location");
         stopBackupProvider();
         lastFixTime = System.currentTimeMillis();
-        updateLocation(location);
+        updateLocation(location, false);
     }
 
     @Override
@@ -137,7 +142,7 @@ public class MixedPositionProvider extends PositionProvider implements LocationL
     @Override
     public void onProviderEnabled(String provider) {
         Log.i(TAG, "provider enabled");
-        stopBackupProvider();
+        startBackupProvider();
     }
 
     @Override
@@ -148,18 +153,15 @@ public class MixedPositionProvider extends PositionProvider implements LocationL
 
     @Override
     public void onGpsStatusChanged(int event) {
-            if (backupListener == null && System.currentTimeMillis() - lastFixTime - requestInterval > FIX_TIMEOUT) {
+
+        if (backupListener == null && System.currentTimeMillis() - lastFixTime - requestInterval > FIX_TIMEOUT) {
                 startBackupProvider();
             }
     }
 
     public void startUpdatesGsm() {
             try {
-                    if (System.currentTimeMillis() - lastFixTime < requestInterval) {
-                        Log.i(TAG, "Update Ignored");
-                        retryGsm();
-                        return;
-                    }
+
 
                 TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
                 GsmCellLocation cellLocation = (GsmCellLocation) telephonyManager.getCellLocation();
@@ -172,8 +174,15 @@ public class MixedPositionProvider extends PositionProvider implements LocationL
                 Bundle gsm = new Bundle();
                 gsm.putSerializable("gsm", 1);
                 targetLocation.setExtras(gsm);
+
+                if (System.currentTimeMillis() - lastFixTime < requestInterval) {
+                    Log.i(TAG, "location forced");
+                    updateLocation(targetLocation,true);
+                } else {
+                    updateLocation(targetLocation, false);
+                }
+
                 lastFixTime = System.currentTimeMillis();
-                updateLocation(targetLocation);
                 retryGsm();
 
             } catch (IllegalArgumentException e) {

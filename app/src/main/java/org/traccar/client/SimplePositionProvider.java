@@ -46,7 +46,7 @@ public class SimplePositionProvider extends PositionProvider implements Location
 
     @Override
     public void onLocationChanged(Location location) {
-        updateLocation(location);
+        updateLocation(location,false);
     }
 
     @Override

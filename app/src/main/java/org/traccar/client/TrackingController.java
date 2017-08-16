@@ -138,12 +138,21 @@ public class TrackingController implements PositionProvider.PositionListener, Ne
 
     private void log(String action, Position position) {
         if (position != null) {
-            action += " (" +
-                    "id:" + position.getId() +
-                    " gsm:" + position.getGsm() +
-                    " time:" + position.getTime().getTime() / 1000 +
-                    " lat:" + position.getLatitude() +
-                    " lon:" + position.getLongitude() + ")";
+            if (position.getGsm().equals(0)) {
+                action += " (" +
+                        "id:" + position.getId() +
+                        " gsm:" + position.getGsm() +
+                        " time:" + position.getTime().getTime() / 1000 +
+                        " lat:" + position.getLatitude() +
+                        " lon:" + position.getLongitude() + ")";
+            }else {
+                action += " (" +
+                        "id:" + position.getId() +
+                        " gsm:" + position.getGsm() +
+                        " time:" + position.getTime().getTime() / 1000 +
+                        " cid:" + position.getLatitude() +
+                        " lac:" + position.getLongitude() + ")";
+            }
         }
         Log.d(TAG, action);
     }

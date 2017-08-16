@@ -77,11 +77,11 @@ public abstract class PositionProvider {
 
     public abstract void stopUpdates();
 
-    protected void updateLocation(Location location) {
-        if (location != null && (lastLocation == null
+    protected void updateLocation(Location location, Boolean forced) {
+        if ((location != null && (lastLocation == null
                 || location.getTime() - lastLocation.getTime() >= interval
                 || distance > 0 && DistanceCalculator.distance(location.getLatitude(), location.getLongitude(), lastLocation.getLatitude(), location.getLongitude()) >= distance
-                || angle > 0 && Math.abs(location.getBearing() - lastLocation.getBearing()) >= angle)) {
+                || angle > 0 && Math.abs(location.getBearing() - lastLocation.getBearing()) >= angle)) || (location != null && forced)) {
             Log.i(TAG, "location new");
             lastLocation = location;
             listener.onPositionUpdate(new Position(deviceId, location, getBatteryLevel(context)));
